@@ -85,6 +85,14 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, stats, budgets }) =
     return status.sort((a, b) => (b.spent / b.limit) - (a.spent / a.limit));
   }, [transactions, budgets]);
 
+  // 5. Overall Budget Stats
+  const overallBudgetStats = useMemo(() => {
+    const totalLimit = budgetStatus.reduce((acc, curr) => acc + curr.limit, 0);
+    const totalSpent = budgetStatus.reduce((acc, curr) => acc + curr.spent, 0);
+    const percent = totalLimit > 0 ? (totalSpent / totalLimit) * 100 : 0;
+    return { totalLimit, totalSpent, percent };
+  }, [budgetStatus]);
+
   const handleGenerateInsight = async () => {
     setIsLoadingAi(true);
     const insight = await generateFinancialInsight(transactions);
@@ -98,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, stats, budgets }) =
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Top Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         <StatCard 
           title="Total Balance" 
           value={fmt(stats.balance)} 
@@ -120,6 +128,16 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, stats, budgets }) =
           trend="-2.4%" 
           trendUp={false} // meaning expenses went down (good)
         />
+        
+        {/* New Overall Budget Card */}
+        <StatCard 
+          title="Budget Usage" 
+          value={`${Math.round(overallBudgetStats.percent)}%`} 
+          icon={<Target className="w-6 h-6 text-orange-500" />} 
+          trend={`${fmt(Math.round(overallBudgetStats.totalSpent))} / ${fmt(overallBudgetStats.totalLimit)}`}
+          trendUp={overallBudgetStats.percent <= 100} 
+        />
+
         <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl p-6 text-white shadow-lg flex flex-col justify-between relative overflow-hidden">
            <div className="relative z-10">
              <h3 className="text-sm font-medium opacity-90">AI Financial Advisor</h3>
